@@ -1,0 +1,21 @@
+#! /bin/bash
+
+prettyssh() {
+    input="$1"
+    if [ -z $input ]; then
+        echo "No input provided. Please provide host details in the command in the format 'username@hostname' and try again."
+        exit 1
+    else
+        local realusername=$(echo "$input" | awk -F@ '{ print $1 }')
+        local realhostname=$(echo "$input" | awk -F@ '{ print $2 }')
+        if [ -z $realusername ] || [ -z $realhostname ]; then
+            echo "Incorrect input provided. Please provide host details in the command in the format 'username@hostname' and try again."
+            exit 1
+        fi
+        scp -r ~/.prettyssh-init $realusername@$realhostname:~/
+        ssh $realusername@$realhostname 'grep -q "source $HOME/.prettyssh-init/.ssh_bash_profile" $HOME/.bashrc || echo "source $HOME/.prettyssh-init/.ssh_bash_profile" >> ~/.bashrc'
+        ssh $realusername@$realhostname
+    fi
+}
+
+prettyssh $1

@@ -1,0 +1,18 @@
+# Used to modify the PS1 string in Bash to show client information.
+
+# Add prettyssh to PATH
+export PATH="~/.ssh-init-files:$PATH"
+
+if [ -z "$SSH_BASH_PROF_EXEC" ]; then
+  export SSH_BASH_PROF_EXEC=1
+  LC_SSH_CLIENT_ORG=${LC_SSH_CLIENT:-}
+  if [ -n "$SSH_CLIENT" ]; then
+    REMOTE_INFO="[${LC_SSH_CLIENT_ORG}]"
+    export LC_SSH_CLIENT="$LC_SSH_CLIENT_ORG $(whoami)@$(hostname) <=="
+  else
+    REMOTE_INFO=""
+    export LC_SSH_CLIENT="$(whoami)@$(hostname) <=="
+  fi
+  unset LC_SSH_CLIENT_ORG
+  PS1="\[\033[01;03;36m\]${REMOTE_INFO}\[\033[00m\] $PS1"
+fi
