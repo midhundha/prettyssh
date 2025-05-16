@@ -1,21 +1,67 @@
 #! /bin/bash
 
-prettyssh() {
-    input="$1"
+# User inputs:
+HOST_PATH="~/" # Path on host to which files must be copied. Default is the HOME folder.
+FOLDER_NAME=".prettyssh-init" # Name of parent folder for executable. Default is ".prettyssh-init".
+
+
+init() {
     if [ -z $input ]; then
         echo "No input provided. Please provide host details in the command in the format 'username@hostname' and try again."
         exit 1
     else
-        local realusername=$(echo "$input" | awk -F@ '{ print $1 }')
-        local realhostname=$(echo "$input" | awk -F@ '{ print $2 }')
+        realusername=$(echo "$input" | awk -F@ '{ print $1 }')
+        realhostname=$(echo "$input" | awk -F@ '{ print $2 }')
         if [ -z $realusername ] || [ -z $realhostname ]; then
             echo "Incorrect input provided. Please provide host details in the command in the format 'username@hostname' and try again."
             exit 1
         fi
-        scp -r ~/.prettyssh-init $realusername@$realhostname:~/
-        ssh $realusername@$realhostname 'grep -q "source $HOME/.prettyssh-init/.ssh_bash_profile" $HOME/.bashrc || echo "source $HOME/.prettyssh-init/.ssh_bash_profile" >> ~/.bashrc'
+    CLIENT_PATH=$(dirname "$0")
+    fi
+}
+
+prettyssh() {
+    init
+    scp -r $CLIENT_PATH $realusername@$realhostname:$HOST_PATH 2> /tmp/pssh_error.log
+    ssh $realusername@$realhostname "
+        grep -q \"source $HOST_PATH$FOLDER_NAME/.ssh_bash_profile\" \$HOME/.bashrc || echo \"source $HOST_PATH$FOLDER_NAME/.ssh_bash_profile\" >> \$HOME/.bashrc
+    " 2>> /tmp/pssh_error.log
+    if [ -s /tmp/pssh_error.log ]; then
+        echo "Something went wront during the initialization process. Please check /tmp/pssh_error.log for more details."
+        exit 1
+    else
+        rm /tmp/pssh_error.log
+        echo "Required environment variables set and files copied over. .bashrc updated."
+        echo
+        echo "Connecting to host now.."
         ssh $realusername@$realhostname
     fi
 }
 
-prettyssh $1
+reset() {
+    init
+    ssh $realusername@$realhostname "
+        [ -n \"\$SSH_BASH_PROF_EXEC\" ] && unset 'SSH_BASH_PROF_EXEC'
+        [ -d $HOST_PATH$FOLDER_NAME ] && rm -r $HOST_PATH$FOLDER_NAME
+        grep -q \"source $HOST_PATH$FOLDER_NAME/.ssh_bash_profile\" \$HOME/.bashrc && sed -i '/^source.*\/$FOLDER_NAME\/.ssh_bash_profile$/d' \$HOME/.bashrc
+    " 2> /tmp/pssh_reset_error.log
+    if [ -s /tmp/pssh_reset_error.log ]; then
+        echo "Something went wront during the reset process. Please check /tmp/pssh_reset_error.log for more details."
+        exit 1
+    else
+        rm /tmp/pssh_reset_error.log
+        echo "Unset environment variable SSH_BASH_PROF_EXEC, reverted changes to .bashrc, and removed files and folders copied over to host."
+        echo "Reset complete."
+    fi    
+}
+
+input="$1"
+if [ $input == "reset" ]; then
+    input="$2"
+    reset
+elif [ $input == "debug" ]; then
+    input="$2"
+    init
+else
+    prettyssh
+fi
