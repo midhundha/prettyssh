@@ -1,7 +1,9 @@
 # Used to modify the PS1 string in Bash to show client information.
 
+FOLDER_NAME=".prettyssh-init" # Name of parent folder for executable. Default is ".prettyssh-init".
+
 # Add prettyssh to PATH
-export PATH="~/.ssh-init-files:$PATH"
+export PATH="~/$FOLDER_NAME:$PATH"
 
 if [ -z "$SSH_BASH_PROF_EXEC" ]; then
   export SSH_BASH_PROF_EXEC=1
