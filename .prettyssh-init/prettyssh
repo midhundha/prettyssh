@@ -5,7 +5,7 @@ HOST_PATH="~/" # Path on host to which files must be copied. Default is the HOME
 FOLDER_NAME=".prettyssh-init" # Name of parent folder for executable. Default is ".prettyssh-init".
 
 
-init() {
+check() {
     if [ -z $input ]; then
         echo "No input provided. Please provide host details in the command in the format 'username@hostname' and try again."
         exit 1
@@ -17,13 +17,14 @@ init() {
             exit 1
         fi
     CLIENT_PATH=$(dirname "$0")
+    [ -z "$LC_SSH_CLIENT" ] && export LC_SSH_CLIENT="$(whoami)@$(hostname) <=="
     fi
 }
 
 prettyssh() {
-    init
+    check
     scp -r $CLIENT_PATH $realusername@$realhostname:$HOST_PATH 2> /tmp/pssh_error.log
-    ssh $realusername@$realhostname "
+    ssh $realusername@$realhostname -o LogLevel=ERROR "
         grep -q \"source $HOST_PATH$FOLDER_NAME/.ssh_bash_profile\" \$HOME/.bashrc || echo \"source $HOST_PATH$FOLDER_NAME/.ssh_bash_profile\" >> \$HOME/.bashrc
     " 2>> /tmp/pssh_error.log
     if [ -s /tmp/pssh_error.log ]; then
@@ -39,7 +40,7 @@ prettyssh() {
 }
 
 reset() {
-    init
+    check
     ssh $realusername@$realhostname "
         [ -n \"\$SSH_BASH_PROF_EXEC\" ] && unset 'SSH_BASH_PROF_EXEC'
         [ -d $HOST_PATH$FOLDER_NAME ] && rm -r $HOST_PATH$FOLDER_NAME
@@ -59,9 +60,9 @@ input="$1"
 if [ $input == "reset" ]; then
     input="$2"
     reset
-elif [ $input == "debug" ]; then
+elif [ $input == "check" ]; then
     input="$2"
-    init
+    check
 else
     prettyssh
 fi
