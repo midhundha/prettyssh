@@ -19,6 +19,21 @@ As an example, the below screenshot shows how the PS1 string in Bash would look 
 ### Note
 Since prettyssh copies over files (using scp) and establishes another ssh session to modify `.bashrc` file, it is recommended to use ssh keys to avoid having to enter passwords multiple times.
 
+## Installation
+1. Check out the repository, or just [`.prettyssh-init`](./.prettyssh-init).
+2. Set file execution permissions: `chmod u+x <rootpath>/.prettyssh-init/*`
+3. Add the path to your user `PATH`. For example, `export PATH="<rootpath>/.prettyssh-init:$PATH"`
+
+It may be convenient to add the command to append to `PATH` (from step 3 above) to `.bashrc` or similar bash config files to make sure that `PATH` is updated automatically on launching a Bash session.
+
+## Usage
+
+#### To begin a Pretty SSH session:
+```prettyssh username@hostname```
+
+#### To reset all files and settings on the host:
+```prettyssh reset username@hostname```
+
 ## Known Issues
 Does not behave well on Mac devices (possibly an issue with home bash config files are sourced in the ssh shell). This needs to be investigated further.
 
